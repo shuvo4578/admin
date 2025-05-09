@@ -160,15 +160,18 @@
             appId: "1:471344116140:web:431f5fc16ed4198baa8a09",
             measurementId: "G-SRE83LDV3P"
         };
+        let db;
+        let auth;
         try {
-            firebase.initializeApp(firebaseConfig);
+            const app = firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore(app);
+            auth = firebase.auth(app);
         } catch (error) {
             console.error("Firebase initialization failed:", error);
-            document.getElementById('login-error').innerText = 'Firebase লোড করতে ব্যর্থ!';
+            document.getElementById('login-error').innerText = 'Firebase লোড করতে ব্যর্থ! কনফিগারেশন চেক করুন।';
             document.getElementById('login-error').classList.remove('hidden');
+            return;
         }
-        const db = firebase.firestore();
-        const auth = firebase.auth();
 
         // Login Logic
         document.getElementById('login-btn').addEventListener('click', () => {
@@ -192,9 +195,11 @@
                     if (error.code === 'auth/wrong-password') {
                         errorMessage += 'ভুল পাসওয়ার্ড।';
                     } else if (error.code === 'auth/user-not-found') {
-                        errorMessage += 'ইউজার পাওয়া যায়নি।';
+                        errorMessage += 'ইউজার পাওয়া যায়নি। ফায়ারবেসে ইউজার তৈরি করুন।';
                     } else if (error.code === 'auth/invalid-email') {
                         errorMessage += 'ভুল ইমেইল ফরম্যাট।';
+                    } else if (error.code === 'auth/invalid-credential') {
+                        errorMessage += 'ইমেইল বা পাসওয়ার্ড সঠিক নয়।';
                     } else {
                         errorMessage += error.message;
                     }
@@ -230,7 +235,7 @@
                 });
             }, (error) => {
                 console.error("Error loading users:", error);
-                alert('ইউজার লোড করতে ব্যর্থ!');
+                alert('ইউজার লোড করতে ব্যর্থ! ডাটাবেস চেক করুন।');
             });
         }
 
@@ -266,7 +271,7 @@
                 })
                 .catch((error) => {
                     console.error("Error saving user:", error);
-                    alert('ইউজার আপডেট করতে ব্যর্থ!');
+                    alert('ইউজার আপডেট করতে ব্যর্থ! ডাটাবেস চেক করুন।');
                 });
         }
 
@@ -280,7 +285,7 @@
                 })
                 .catch((error) => {
                     console.error("Error toggling block:", error);
-                    alert('ইউজার ব্লক/আনব্লক করতে ব্যর্থ!');
+                    alert('ইউজার ব্লক/আনব্লক করতে ব্যর্থ! ডাটাবেস চেক করুন।');
                 });
         }
 
@@ -306,7 +311,7 @@
                 });
             }, (error) => {
                 console.error("Error loading withdrawals:", error);
-                alert('উইথড্র রিকোয়েস্ট লোড করতে ব্যর্থ!');
+                alert('উইথড্র রিকোয়েস্ট লোড করতে ব্যর্থ! ডাটাবেস চেক করুন।');
             });
         }
 
@@ -332,16 +337,16 @@
                             loadWithdrawals();
                         }).catch((error) => {
                             console.error("Error updating user:", error);
-                            alert('ইউজার আপডেট করতে ব্যর্থ!');
+                            alert('ইউজার আপডেট করতে ব্যর্থ! ডাটাবেস চেক করুন।');
                         });
                     });
                 }).catch((error) => {
                     console.error("Error approving withdrawal:", error);
-                    alert('উইথড্র অ্যাপ্রুভ করতে ব্যর্থ!');
+                    alert('উইথড্র অ্যাপ্রুভ করতে ব্যর্থ! ডাটাবেস চেক করুন।');
                 });
             }).catch((error) => {
                 console.error("Error fetching withdrawal:", error);
-                alert('উইথড্র রিকোয়েস্ট লোড করতে ব্যর্থ!');
+                alert('উইথড্র রিকোয়েস্ট লোড করতে ব্যর্থ! ডাটাবেস চেক করুন।');
             });
         }
 
@@ -353,7 +358,7 @@
                 })
                 .catch((error) => {
                     console.error("Error rejecting withdrawal:", error);
-                    alert('উইথড্র রিজেক্ট করতে ব্যর্থ!');
+                    alert('উইথড্র রিজেক্ট করতে ব্যর্থ! ডাটাবেস চেক করুন।');
                 });
         }
 
@@ -369,10 +374,18 @@
                     document.getElementById('min-withdraw').value = data.minWithdraw || 50;
                     document.getElementById('withdraw-note').value = data.withdrawNote || 'Payment will be processed within 24 hours.';
                     document.getElementById('about-content').value = data.aboutContent || 'We are a reward app that lets you earn coins...';
+                } else {
+                    document.getElementById('mining-rate').value = 0.5;
+                    document.getElementById('boost-percentage').value = 50;
+                    document.getElementById('boost-duration').value = 10;
+                    document.getElementById('coin-to-bdt').value = 0.1;
+                    document.getElementById('min-withdraw').value = 50;
+                    document.getElementById('withdraw-note').value = 'Payment will be processed within 24 hours.';
+                    document.getElementById('about-content').value = 'We are a reward app that lets you earn coins...';
                 }
             }, (error) => {
                 console.error("Error loading settings:", error);
-                alert('সেটিংস লোড করতে ব্যর্থ!');
+                alert('সেটিংস লোড করতে ব্যর্থ! ডাটাবেস চেক করুন।');
             });
         }
 
@@ -399,7 +412,7 @@
                 })
                 .catch((error) => {
                     console.error("Error saving settings:", error);
-                    document.getElementById('save-status').innerText = 'সেটিংস সেভ করতে ব্যর্থ!';
+                    document.getElementById('save-status').innerText = 'সেটিংস সেভ করতে ব্যর্থ! ডাটাবেস চেক করুন।';
                 });
         });
     </script>
