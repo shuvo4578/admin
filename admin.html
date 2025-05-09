@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - My Reward App</title>
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-auth.js";
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBhhLnckzmS2DF8ZQ1OTrqFwiGKK2DNnJY",
+            authDomain: "mega-reward-bfea9.firebaseapp.com",
+            projectId: "mega-reward-bfea9",
+            storageBucket: "mega-reward-bfea9.firebasestorage.app",
+            messagingSenderId: "471344116140",
+            appId: "1:471344116140:web:431f5fc16ed4198baa8a09"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+    </script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #1E90FF, #FFFFFF);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            padding: 20px;
+            width: 90%;
+            max-width: 600px;
+        }
+        .btn {
+            background: linear-gradient(to right, #FF4500, #FF8C00);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .btn-green {
+            background: linear-gradient(to right, #32CD32, #98FB98);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background: #f4f4f4;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Login Page -->
+        <div id="login-page" class="card">
+            <h2 class="text-2xl font-bold text-center">Admin Login</h2>
+            <input id="email" type="email" placeholder="Email" class="w-full p-2 mt-4 border rounded">
+            <input id="password" type="password" placeholder="Password" class="w-full p-2 mt-2 border rounded">
+            <div id="login-btn" class="btn mt-4">Login</div>
+            <p id="login-error" class="text-red-500 mt-2 hidden"></p>
+        </div>
+
+        <!-- Admin Dashboard -->
+        <div id="dashboard-page" class="card hidden">
+            <h2 class="text-2xl font-bold text-center">Admin Panel</h2>
+            <div class="tabs">
+                <button onclick="showTab('users')" class="btn mr-2">Manage Users</button>
+                <button onclick="showTab('withdrawals')" class="btn mr-2">Payment Requests</button>
+                <button onclick="showTab('settings')" class="btn">Settings</button>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="users-tab" class="tab-content">
+                <h3 class="text-xl font-bold mt-4">Users Management</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Coins</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table"></tbody>
+                </table>
+            </div>
+
+            <!-- Withdrawals Tab -->
+            <div id="withdrawals-tab" class="tab-content hidden">
+                <h3 class="text-xl font-bold mt-4">Pending Payment Requests</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Number</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="withdrawals-table"></tbody>
+                </table>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings-tab" class="tab-content hidden">
+                <h3 class="text-xl font-bold mt-4">Settings</h3>
+                <div class="mt-4">
+                    <label>Mining Rate (coins/min):</label>
+                    <input id="mining-rate" type="number" step="0.1" class="w-full p-2 mt-2 border rounded" value="0.5">
+                </div>
+                <div class="mt-4">
+                    <label>Boost Percentage (%):</label>
+                    <input id="boost-percentage" type="number" step="1" class="w-full p-2 mt-2 border rounded" value="50">
+                </div>
+                <div class="mt-4">
+                    <label>Boost Duration (seconds):</label>
+                    <input id="boost-duration" type="number" step="1" class="w-full p-2 mt-2 border rounded" value="10">
+                </div>
+                <div class="mt-4">
+                    <label>Coin to BDT Ratio:</label>
+                    <input id="coin-to-bdt" type="number" step="0.1" class="w-full p-2 mt-2 border rounded" value="0.1">
+                </div>
+                <div class="mt-4">
+                    <label>Minimum Withdraw (BDT):</label>
+                    <input id="min-withdraw" type="number" step="1" class="w-full p-2 mt-2 border rounded" value="50">
+                </div>
+                <div class="mt-4">
+                    <label>Withdraw Note:</label>
+                    <textarea id="withdraw-note" class="w-full p-2 mt-2 border rounded">Payment will be processed within 24 hours.</textarea>
+                </div>
+                <div class="mt-4">
+                    <label>About Us Content:</label>
+                    <textarea id="about-content" class="w-full p-2 mt-2 border rounded">We are a reward app that lets you earn coins...</textarea>
+                </div>
+                <div id="save-settings" class="btn btn-green mt-4">Save Settings</div>
+                <p id="save-status" class="mt-2"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Login Logic
+        document.getElementById('login-btn').addEventListener('click', () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            signInWithEmailAndPassword(auth, email, password)
+                .then(() => {
+                    document.getElementById('login-page').classList.add('hidden');
+                    document.getElementById('dashboard-page').classList.remove('hidden');
+                    loadUsers();
+                    loadWithdrawals();
+                    loadSettings();
+                })
+                .catch(error => {
+                    document.getElementById('login-error').innerText = 'Invalid credentials!';
+                    document.getElementById('login-error').classList.remove('hidden');
+                });
+        });
+
+        // Tab Navigation
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            document.getElementById(`${tabId}-tab`).classList.remove('hidden');
+        }
+
+        // Load Users
+        async function loadUsers() {
+            const snapshot = await db.collection('users').get();
+            const table = document.getElementById('users-table');
+            table.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const row = `<tr>
+                    <td>${doc.id}</td>
+                    <td>${data.name}</td>
+                    <td>${data.coins || 0}</td>
+                    <td>${data.status || 'Active'}</td>
+                    <td>
+                        <button onclick="editUser('${doc.id}', '${data.name}', ${data.coins || 0}, '${data.status || 'Active'}')" class="btn mr-2">Edit</button>
+                        <button onclick="toggleBlock('${doc.id}', '${data.status || 'Active'}')" class="btn">${data.status === 'Blocked' ? 'Unblock' : 'Block'}</button>
+                    </td>
+                </tr>`;
+                table.innerHTML += row;
+            });
+        }
+
+        // Edit User
+        let editingUserId = null;
+        function editUser(id, name, coins, status) {
+            editingUserId = id;
+            document.getElementById('users-tab').innerHTML = `
+                <h3 class="text-xl font-bold mt-4">Edit User</h3>
+                <input id="edit-name" type="text" value="${name}" class="w-full p-2 mt-2 border rounded">
+                <input id="edit-coins" type="number" value="${coins}" class="w-full p-2 mt-2 border rounded">
+                <select id="edit-status" class="w-full p-2 mt-2 border rounded">
+                    <option value="Active" ${status === 'Active' ? 'selected' : ''}>Active</option>
+                    <option value="Blocked" ${status === 'Blocked' ? 'selected' : ''}>Blocked</option>
+                </select>
+                <button onclick="saveUser()" class="btn mt-4">Save</button>
+                <button onclick="loadUsers()" class="btn mt-4 ml-2">Cancel</button>
+            `;
+        }
+
+        async function saveUser() {
+            const name = document.getElementById('edit-name').value;
+            const coins = parseFloat(document.getElementById('edit-coins').value);
+            const status = document.getElementById('edit-status').value;
+            await db.collection('users').doc(editingUserId).update({ name, coins, status });
+            loadUsers();
+        }
+
+        // Toggle Block/Unblock
+        async function toggleBlock(userId, status) {
+            const newStatus = status === 'Blocked' ? 'Active' : 'Blocked';
+            await db.collection('users').doc(userId).update({ status: newStatus });
+            loadUsers();
+        }
+
+        // Load Withdrawals
+        async function loadWithdrawals() {
+            const snapshot = await db.collection('withdraw_requests').where('status', '==', 'Pending').get();
+            const table = document.getElementById('withdrawals-table');
+            table.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const row = `<tr>
+                    <td>${data.userName}</td>
+                    <td>${data.amount} BDT</td>
+                    <td>${data.method}</td>
+                    <td>${data.number}</td>
+                    <td>${data.status}</td>
+                    <td>
+                        <button onclick="approveWithdrawal('${doc.id}')" class="btn mr-2">Approve</button>
+                        <button onclick="rejectWithdrawal('${doc.id}')" class="btn">Reject</button>
+                    </td>
+                </tr>`;
+                table.innerHTML += row;
+            });
+        }
+
+        async function approveWithdrawal(id) {
+            const doc = await db.collection('withdraw_requests').doc(id).get();
+            const data = doc.data();
+            await db.collection('withdraw_requests').doc(id).update({ status: 'Approved' });
+            await db.collection('users').doc(data.userId).update({ coins: 0, withdrawn: (data.amount || 0) + (data.withdrawn || 0) });
+            loadWithdrawals();
+        }
+
+        async function rejectWithdrawal(id) {
+            await db.collection('withdraw_requests').doc(id).update({ status: 'Rejected' });
+            loadWithdrawals();
+        }
+
+        // Load Settings
+        async function loadSettings() {
+            const doc = await db.collection('settings').doc('general').get();
+            if (doc.exists) {
+                const data = doc.data();
+                document.getElementById('mining-rate').value = data.miningRate || 0.5;
+                document.getElementById('boost-percentage').value = data.boostPercentage || 50;
+                document.getElementById('boost-duration').value = data.boostDuration || 10;
+                document.getElementById('coin-to-bdt').value = data.coinToBdt || 0.1;
+                document.getElementById('min-withdraw').value = data.minWithdraw || 50;
+                document.getElementById('withdraw-note').value = data.withdrawNote || 'Payment will be processed within 24 hours.';
+                document.getElementById('about-content').value = data.aboutContent || 'We are a reward app that lets you earn coins...';
+            }
+        }
+
+        // Save Settings
+        document.getElementById('save-settings').addEventListener('click', async () => {
+            const settings = {
+                miningRate: parseFloat(document.getElementById('mining-rate').value),
+                boostPercentage: parseInt(document.getElementById('boost-percentage').value),
+                boostDuration: parseInt(document.getElementById('boost-duration').value),
+                coinToBdt: parseFloat(document.getElementById('coin-to-bdt').value),
+                minWithdraw: parseInt(document.getElementById('min-withdraw').value),
+                withdrawNote: document.getElementById('withdraw-note').value,
+                aboutContent: document.getElementById('about-content').value
+            };
+            await db.collection('settings').doc('general').set(settings);
+            document.getElementById('save-status').innerText = 'Settings saved successfully!';
+            setTimeout(() => document.getElementById('save-status').innerText = '', 2000);
+        });
+    </script>
+</body>
+</html>
