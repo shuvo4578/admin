@@ -6,9 +6,11 @@
     <title>Admin Panel - My Reward App</title>
     <!-- Firebase SDK -->
     <script type="module">
+        // Firebase App and Auth
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, collection, getDocs, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-auth.js";
+        // Firestore
+        import { getFirestore, doc, getDoc, setDoc, collection, getDocs, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/11.7.1/firebase-firestore.js";
         const firebaseConfig = {
             apiKey: "AIzaSyBhhLnckzmS2DF8ZQ1OTrqFwiGKK2DNnJY",
             authDomain: "mega-reward-bfea9.firebaseapp.com",
